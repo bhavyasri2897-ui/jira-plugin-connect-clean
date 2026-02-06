@@ -6,31 +6,51 @@ const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-const BASE_URL = process.env.BASE_URL; // ngrok https url
+const BASE_URL = process.env.BASE_URL; // e.g. https://jira-connect-gemini-app.onrender.com
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 app.use("/public", express.static(path.join(__dirname, "public")));
 
+// ✅ REQUIRED by Jira Connect during install
+app.post("/installed", (req, res) => {
+  console.log("✅ /installed called by Jira");
+  console.log(req.body); // contains clientKey, baseUrl, etc.
+  return res.status(204).send();
+});
+
+app.post("/uninstalled", (req, res) => {
+  console.log("❌ /uninstalled called by Jira");
+  console.log(req.body);
+  return res.status(204).send();
+});
+
 // ✅ Connect descriptor
 app.get("/atlassian-connect.json", (req, res) => {
-  res.json({
-    key: "my-connect-app",
-    name: "My Connect App",
+  const descriptor = {
+    key: "jira-gemini-connect-app-001", // ✅ MUST be unique
+    description: "Plugin to generate stories within an epic, create test cases, and add a new button at the Sprint Board level and Backlog Level",
+    name: "Gemini Jira Connect",
     baseUrl: BASE_URL,
-    authentication: { type: "none" }, // dev demo (keep simple)
+    authentication: { type: "none" }, // dev/demo
     apiVersion: 1,
     scopes: ["READ"],
+    lifecycle: {
+      installed: "/installed",
+      uninstalled: "/uninstalled"
+    },
     modules: {
       jiraIssueContents: [
         {
           key: "gemini-issue-panel",
-          name: { value: "Gemini Panel" },
-          url: "/public/issue-panel.html?issueKey={issue.key}",
+          name: { value: "Gemini AI" },
+          url: "/public/issue-panel.html",
           location: "atl.jira.view.issue.right.context"
         }
       ]
     }
-  });
+  };
+
+  res.status(200).type("application/json").json(descriptor);
 });
 
 // ✅ Gemini API proxy (backend)
