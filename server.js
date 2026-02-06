@@ -25,26 +25,155 @@ app.post("/uninstalled", (req, res) => {
 });
 
 // ✅ Connect descriptor
+// app.get("/atlassian-connect.json", (req, res) => {
+//   const descriptor = {
+//     key: "jira-gemini-connect-app-001", // ✅ MUST be unique
+//     description: "Plugin to generate stories within an epic, create test cases, and add a new button at the Sprint Board level and Backlog Level",
+//     name: "Gemini Jira Connect",
+//     baseUrl: BASE_URL,
+//     authentication: { type: "none" }, // dev/demo
+//     apiVersion: 1,
+//     scopes: ["READ"],
+//     lifecycle: {
+//       installed: "/installed",
+//       uninstalled: "/uninstalled"
+//     },
+//     modules: {
+//       jiraIssueContents: [
+//         {
+//           key: "gemini-issue-panel",
+//           name: { value: "Gemini AI" },
+//           url: "/public/issue-pannel.html",
+//           location: "atl.jira.view.issue.right.context"
+//         }
+//       ]
+//     }
+//   };
+
+//   res.status(200).type("application/json").json(descriptor);
+// });
 app.get("/atlassian-connect.json", (req, res) => {
   const descriptor = {
-    key: "jira-gemini-connect-app-001", // ✅ MUST be unique
-    description: "Plugin to generate stories within an epic, create test cases, and add a new button at the Sprint Board level and Backlog Level",
-    name: "Gemini Jira Connect",
+    name: "A.AVA Digital Ascender",
+    description:
+      "Plugin to generate stories within an epic, create test cases, and add a new button at the Sprint Board level and Backlog Level",
+
+    key: "AVA.Ascender.Plugin-v1",
     baseUrl: BASE_URL,
-    authentication: { type: "none" }, // dev/demo
-    apiVersion: 1,
-    scopes: ["READ"],
-    lifecycle: {
-      installed: "/installed",
-      uninstalled: "/uninstalled"
+
+    vendor: {
+      name: "Ascendion, Inc.",
+      url: "https://Ascendion.com"
     },
+
+    authentication: {
+      type: "none"
+    },
+
+    apiMigrations: {
+      gdpr: true
+    },
+
+    scopes: [
+      "read",
+      "write",
+      "act_as_user",
+      "admin"
+    ],
+
+    apiVersion: 1,
+
     modules: {
       jiraIssueContents: [
         {
-          key: "gemini-issue-panel",
-          name: { value: "Gemini AI" },
-          url: "/public/issue-pannel.html",
-          location: "atl.jira.view.issue.right.context"
+          key: "my-issue-content-panel",
+          name: {
+            value: "Digital Ascender"
+          },
+          icon: {
+            url: "/icon.png"
+          },
+          target: {
+            type: "web_panel",
+            url: "/public/issue-panel.html"
+          },
+          tooltip: {
+            value: "A.AVA Digital Ascender"
+          },
+          contentPresentConditions: [
+            {
+              condition: "user_is_admin",
+              invert: false
+            }
+          ],
+          jiraNativeAppsEnabled: false
+        }
+      ],
+
+      webItems: [
+        {
+          key: "board-custom-action",
+          location: "jira.software.board.tools",
+          name: {
+            value: "AVA+ Digi Sprinter"
+          },
+          context: "addon",
+          tooltip: {
+            value: "AVA+ Digi Sprinter"
+          },
+          weight: 10,
+          icon: {
+            url: "/public/avaplus.png",
+            width: 24,
+            height: 24
+          },
+          contentPresentConditions: [
+            {
+              condition: "user_is_admin",
+              invert: false
+            }
+          ],
+          jiraNativeAppsEnabled: false
+        },
+        {
+          key: "backlog-custom-action",
+          location: "jira.software.backlog.tools",
+          name: {
+            value: "AVA+ Digi Sprinter"
+          },
+          context: "addon",
+          tooltip: {
+            value: "AVA+ Digi Sprinter"
+          },
+          weight: 20,
+          icon: {
+            url: "/public/avaplus.png",
+            width: 24,
+            height: 24
+          },
+          contentPresentConditions: [
+            {
+              condition: "user_is_admin",
+              invert: false
+            }
+          ],
+          jiraNativeAppsEnabled: false
+        }
+      ],
+
+      configurePage: {
+        key: "configuration",
+        url: "/configure",
+        name: {
+          value: "Configure A.AVA Digital Ascender"
+        }
+      },
+
+      webhooks: [
+        {
+          event: "jira:issue_updated",
+          url: "/issue-updated",
+          excludeBody: false
         }
       ]
     }
@@ -52,6 +181,8 @@ app.get("/atlassian-connect.json", (req, res) => {
 
   res.status(200).type("application/json").json(descriptor);
 });
+
+
 
 // ✅ Gemini API proxy (backend)
 app.post("/api/gemini", async (req, res) => {
