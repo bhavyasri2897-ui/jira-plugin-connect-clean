@@ -43,7 +43,7 @@ app.get("/atlassian-connect.json", (req, res) => {
         {
           key: "gemini-issue-panel",
           name: { value: "Gemini AI" },
-          url: "/public/issue-panel.html",
+          url: "/public/issue-pannel.html",
           location: "atl.jira.view.issue.right.context"
         }
       ]
