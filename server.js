@@ -52,59 +52,104 @@ app.post("/uninstalled", (req, res) => {
 
 //   res.status(200).type("application/json").json(descriptor);
 // });
+// ✅ Connect descriptor
 app.get("/atlassian-connect.json", (req, res) => {
   const descriptor = {
-    name: "A.AVA Digital Ascender",
+    key: "jira-gemini-connect-app-001",
+    name: "Gemini Jira Connect",
     description:
       "Plugin to generate stories within an epic, create test cases, and add a new button at the Sprint Board level and Backlog Level",
-
-    key: "AVA.Ascender.Plugin-v1",
     baseUrl: BASE_URL,
 
     vendor: {
       name: "Ascendion, Inc.",
-      url: "https://Ascendion.com"
+      url: "https://ascendion.com"
     },
 
     authentication: { type: "none" },
-
+    apiVersion: 1,
     apiMigrations: { gdpr: true },
 
-    scopes: ["read", "write", "act_as_user", "admin"],
+    scopes: ["read", "write", "act_as_user"],
 
-    apiVersion: 1,
+    lifecycle: {
+      installed: "/installed",
+      uninstalled: "/uninstalled"
+    },
 
     modules: {
       jiraIssueContents: [
         {
-          key: "my-issue-content-panel",
-          name: { value: "Digital Ascender" },
+          key: "gemini-issue-panel",
+          name: { value: "Gemini AI" },
           icon: { url: "/public/icon.png" },
-          url: "/public/issue-panel.html",
-          location: "atl.jira.view.issue.right.context",
-          tooltip: { value: "A.AVA Digital Ascender" },
-          jiraNativeAppsEnabled: false
+
+          // ✅ IMPORTANT: file name must match exactly
+          // If your file is issue-pannel.html then keep that spelling
+          url: "/public/issue-pannel.html",
+
+          location: "atl.jira.view.issue.right.context"
         }
-      ],
-
-      configurePage: {
-        key: "configuration",
-        url: "/configure",
-        name: { value: "Configure A.AVA Digital Ascender" }
-      },
-
-    //   webhooks: [
-    //     {
-    //       event: "jira:issue_updated",
-    //       url: "/issue-updated",
-    //       excludeBody: false
-    //     }
-    //   ]
+      ]
     }
   };
 
-  res.status(200).type("application/json").json(descriptor);
+  res.status(200).json(descriptor);
 });
+
+// app.get("/atlassian-connect.json", (req, res) => {
+//   const descriptor = {
+//     name: "A.AVA Digital Ascender",
+//     description:
+//       "Plugin to generate stories within an epic, create test cases, and add a new button at the Sprint Board level and Backlog Level",
+
+//     key: "AVA.Ascender.Plugin-v1",
+//     baseUrl: BASE_URL,
+
+//     vendor: {
+//       name: "Ascendion, Inc.",
+//       url: "https://Ascendion.com"
+//     },
+
+//     authentication: { type: "none" },
+
+//     apiMigrations: { gdpr: true },
+
+//     scopes: ["read", "write", "act_as_user", "admin"],
+
+//     apiVersion: 1,
+
+//     modules: {
+//       jiraIssueContents: [
+//         {
+//           key: "my-issue-content-panel",
+//           name: { value: "Digital Ascender" },
+//           icon: { url: "/public/icon.png" },
+//           url: "/public/issue-panel.html",
+//           location: "atl.jira.view.issue.right.context",
+//           tooltip: { value: "A.AVA Digital Ascender" },
+//           jiraNativeAppsEnabled: false
+//         }
+//       ],
+
+//       configurePage: {
+//         key: "configuration",
+//         url: "/configure",
+//         name: { value: "Configure A.AVA Digital Ascender" }
+//       },
+
+//     //   webhooks: [
+//     //     {
+//     //       event: "jira:issue_updated",
+//     //       url: "/issue-updated",
+//     //       excludeBody: false
+//     //     }
+//     //   ]
+//     }
+//   };
+
+//   res.status(200).type("application/json").json(descriptor);
+// });
 
 
 
