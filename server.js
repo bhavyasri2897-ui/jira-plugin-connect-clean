@@ -56,12 +56,12 @@ app.post("/uninstalled", (req, res) => {
 app.get("/atlassian-connect.json", (req, res) => {
   const descriptor = {
     "apiVersion": 1,
-    "key": "aava-refiner-v4",
-    "name": "AAVA Description Refiner",
+     "key": "jira-pugin-connect-v1",
+    "name":  "jira-pugin-connect",
     "description": "Refine Jira issue descriptions using Gemini AI",
-    "vendor": {
-        "name": "AAVA",
-        "url": "https://example.com"
+     "vendor": {
+      "name": "jira-pugin-connect",
+      "url": "https://jira-connect-gemini-app.onrender.com"
     },
     "baseUrl": "https://jira-connect-gemini-app.onrender.com",
     "links": {
@@ -83,9 +83,9 @@ app.get("/atlassian-connect.json", (req, res) => {
     "modules": {
         "jiraIssueContents": [
             {
-                "key": "aava-refiner-left",
+                "key": "jira-pugin-connect-issue-panel",
                 "name": {
-                    "value": "Refine with AAVA"
+                    "value": "jira-pugin-connect",
                 },
                 "target": {
                     "type": "web_panel",
