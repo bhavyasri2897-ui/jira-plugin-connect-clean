@@ -2,11 +2,16 @@ const express = require("express");
 const path = require("path");
 require("dotenv").config();
 
+// ✅ Node 18+ has global fetch. For older Node, fallback to node-fetch.
+const fetchFn =
+  global.fetch ||
+  ((...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args)));
+
 const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-const BASE_URL = process.env.BASE_URL; // e.g. https://jira-connect-gemini-app.onrender.com
+const BASE_URL = process.env.BASE_URL || "https://jira-connect-gemini-app.onrender.com";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 app.use("/public", express.static(path.join(__dirname, "public")));
@@ -14,7 +19,7 @@ app.use("/public", express.static(path.join(__dirname, "public")));
 // ✅ REQUIRED by Jira Connect during install
 app.post("/installed", (req, res) => {
   console.log("✅ /installed called by Jira");
-  console.log(req.body); // contains clientKey, baseUrl, etc.
+  console.log(req.body);
   return res.status(204).send();
 });
 
@@ -24,99 +29,61 @@ app.post("/uninstalled", (req, res) => {
   return res.status(204).send();
 });
 
-// ✅ Connect descriptor
-// app.get("/atlassian-connect.json", (req, res) => {
-//   const descriptor = {
-//     key: "jira-gemini-connect-app-001", // ✅ MUST be unique
-//     description: "Plugin to generate stories within an epic, create test cases, and add a new button at the Sprint Board level and Backlog Level",
-//     name: "Gemini Jira Connect",
-//     baseUrl: BASE_URL,
-//     authentication: { type: "none" }, // dev/demo
-//     apiVersion: 1,
-//     scopes: ["READ"],
-//     lifecycle: {
-//       installed: "/installed",
-//       uninstalled: "/uninstalled"
-//     },
-//     modules: {
-//       jiraIssueContents: [
-//         {
-//           key: "gemini-issue-panel",
-//           name: { value: "Gemini AI" },
-//           url: "/public/issue-pannel.html",
-//           location: "atl.jira.view.issue.right.context"
-//         }
-//       ]
-//     }
-//   };
-
-//   res.status(200).type("application/json").json(descriptor);
-// });
-// ✅ Connect descriptor
+// ✅ Descriptor (UNCHANGED)
 app.get("/atlassian-connect.json", (req, res) => {
   const descriptor = {
-    "apiVersion": 1,
-     "key": "jira-pugin-connect-v1",
-    "name":  "jira-pugin-connect",
-    "description": "Refine Jira issue descriptions using Gemini AI",
-     "vendor": {
-      "name": "jira-pugin-connect",
-      "url": "https://jira-connect-gemini-app.onrender.com"
+    apiVersion: 1,
+    key: "jira-pugin-connect-v1",
+    name: "jira-pugin-connect",
+    description: "Refine Jira issue descriptions using Gemini AI",
+    vendor: {
+      name: "jira-pugin-connect",
+      url: "https://jira-connect-gemini-app.onrender.com"
     },
-    "baseUrl": "https://jira-connect-gemini-app.onrender.com",
-    "links": {
-        "self": "https://jira-connect-gemini-app.onrender.com/atlassian-connect.json",
+    baseUrl: "https://jira-connect-gemini-app.onrender.com",
+    links: {
+      self: "https://jira-connect-gemini-app.onrender.com/atlassian-connect.json"
     },
-    "authentication": {
-        "type": "jwt"
-    },
-    "apiMigrations": {
-        "context-qsh": true
-    },
-    "lifecycle": {
-        "installed": "/installed"
-    },
-    "scopes": [
-        "READ",
-        "WRITE"
-    ],
-    "modules": {
-        "jiraIssueContents": [
-            {
-                "key": "jira-pugin-connect-issue-panel",
-                "name": {
-                    "value": "jira-pugin-connect",
-                },
-                "target": {
-                    "type": "web_panel",
-                    "url": "/render-refiner?issueKey={issue.key}"
-                },
-                "icon": {
-                    "width": 16,
-                    "height": 16,
-                    "url": "/icon.png"
-                },
-                "tooltip": {
-                    "value": "Refine issue description with Gemini AI"
-                }
-            }
-        ]
+    authentication: { type: "jwt" },
+    apiMigrations: { "context-qsh": true },
+    lifecycle: { installed: "/installed" },
+    scopes: ["READ", "WRITE"],
+    modules: {
+      jiraIssueContents: [
+        {
+          key: "jira-pugin-connect-issue-panel",
+          name: { value: "jira-pugin-connect" },
+          target: {
+            type: "web_panel",
+            url: "/render-refiner?issueKey={issue.key}"
+          },
+          icon: { width: 16, height: 16, url: "/icon.png" },
+          tooltip: { value: "Refine issue description with Gemini AI" }
+        }
+      ]
     }
-}
+  };
+
   res.status(200).json(descriptor);
 });
 
+// ✅ Serve the frontend page used by your descriptor target URL
+app.get("/render-refiner", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "render-refiner.html"));
+});
 
-
-
-
-
-// ✅ Gemini API proxy (backend)
+// ✅ Gemini API proxy (backend) - reusing your endpoint, just using fetchFn
 app.post("/api/gemini", async (req, res) => {
   try {
     const { prompt } = req.body;
+    if (!prompt || !prompt.trim()) {
+      return res.status(400).json({ error: "prompt is required" });
+    }
+    if (!GEMINI_API_KEY) {
+      return res.status(500).json({ error: "GEMINI_API_KEY is missing in env" });
+    }
 
-    const r = await fetch(
+    const r = await fetchFn(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
@@ -128,10 +95,12 @@ app.post("/api/gemini", async (req, res) => {
     );
 
     const data = await r.json();
-    const text =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response from Gemini";
 
-    res.json({ response: text });
+    const text =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "No response from Gemini";
+
+    res.json({ response: text, raw: data });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "Gemini call failed" });
