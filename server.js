@@ -38,11 +38,11 @@ app.get("/atlassian-connect.json", (req, res) => {
     description: "Refine Jira issue descriptions using Gemini AI",
     vendor: {
       name: "jira-pugin-connect",
-      url: "https://jira-connect-gemini-app.onrender.com"
+      url: "https://jira-plugin-connect-clean-1.onrender.com"
     },
-    baseUrl: "https://jira-connect-gemini-app.onrender.com",
+    baseUrl: "https://jira-plugin-connect-clean-1.onrender.com",
     links: {
-      self: "https://jira-connect-gemini-app.onrender.com/atlassian-connect.json"
+      self: "https://jira-plugin-connect-clean-1.onrender.com/atlassian-connect.json"
     },
     authentication: { type: "jwt" },
     apiMigrations: { "context-qsh": true },
