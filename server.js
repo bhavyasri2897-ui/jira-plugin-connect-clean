@@ -11,7 +11,7 @@ const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-const BASE_URL = process.env.BASE_URL || "https://jira-connect-gemini-app.onrender.com";
+const BASE_URL = process.env.BASE_URL || "https://jira-plugin-connect-clean-1.onrender.com";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 app.use("/public", express.static(path.join(__dirname, "public")));
