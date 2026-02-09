@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Atlassian Connect Bridge -->
+  <!-- Jira Connect bridge -->
   <script src="https://connect-cdn.atl-paas.net/all.js"
           data-options="resize:true;sizeToParent:true;"></script>
 
@@ -15,10 +15,10 @@
     .muted { color: #666; font-size: 12px; margin-top: 10px; }
   </style>
 </head>
-
 <body>
   <button id="btnRefine">✨ Refine with Gemini</button>
   <div class="muted" id="status">Ready.</div>
+
   <textarea id="output" placeholder="Gemini output will appear here…"></textarea>
 
   <script src="/public/render-refiner.js"></script>
