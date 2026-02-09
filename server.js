@@ -109,63 +109,47 @@ app.get("/render-refiner", (req, res) => {
 app.post("/api/gemini", async (req, res) => {
   try {
     const { prompt } = req.body;
-
-    if (!prompt || !prompt.trim()) {
-      return res.status(400).json({ error: "prompt is required" });
-    }
-    if (!GEMINI_API_KEY) {
-      return res.status(500).json({ error: "GEMINI_API_KEY missing" });
-    }
+    if (!prompt || !prompt.trim()) return res.status(400).json({ error: "prompt required" });
+    if (!process.env.GEMINI_API_KEY) return res.status(500).json({ error: "GEMINI_API_KEY missing" });
 
     const MODEL = "models/gemini-2.5-flash-native-audio-preview-12-2025";
     const url = `https://generativelanguage.googleapis.com/v1beta/${MODEL}:bidiGenerateContent`;
 
-    // ✅ IMPORTANT: use fetchFn (not fetch)
     const response = await fetchFn(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-goog-api-key": GEMINI_API_KEY
+        "x-goog-api-key": process.env.GEMINI_API_KEY
       },
       body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: prompt }]
-          }
-        ]
+        contents: [{ role: "user", parts: [{ text: prompt }] }]
       })
     });
 
     const data = await response.json();
 
-    // ✅ return REAL error (so UI shows it)
     if (!response.ok) {
-      console.error("❌ Gemini error:", data);
       return res.status(response.status).json({
         error: data?.error?.message || "Gemini API error",
         details: data
       });
     }
 
-    // ✅ Robust text extraction (bidi can return multiple parts)
-    const parts = data?.candidates?.[0]?.content?.parts || [];
-    const text = parts.map(p => p?.text).filter(Boolean).join("\n").trim();
+    const text = (data?.candidates?.[0]?.content?.parts || [])
+      .map(p => p?.text)
+      .filter(Boolean)
+      .join("\n")
+      .trim();
 
-    if (!text) {
-      console.error("❌ Gemini returned no text:", data);
-      return res.status(502).json({
-        error: "Gemini returned no text",
-        details: data
-      });
-    }
+    if (!text) return res.status(502).json({ error: "No text returned", details: data });
 
-    return res.json({ response: text });
+    res.json({ response: text });
   } catch (err) {
-    console.error("❌ /api/gemini crashed:", err);
-    return res.status(500).json({ error: "Gemini call failed", details: String(err) });
+    console.error(err);
+    res.status(500).json({ error: "Gemini call failed", details: String(err) });
   }
 });
+
 
 
 

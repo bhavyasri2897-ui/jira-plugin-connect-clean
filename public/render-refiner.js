@@ -1,31 +1,23 @@
-// public/render-refiner.js
-
 (() => {
+  const btn = document.getElementById("btnRefine");
+  const statusEl = document.getElementById("status");
+  const outputEl = document.getElementById("output");
+
   function qs(name) {
     return new URLSearchParams(window.location.search).get(name);
   }
 
   const issueKey = qs("issueKey");
 
-  const btnRefine = document.getElementById("btnRefine");
-  const statusEl = document.getElementById("status");
-  const refinedDescEl = document.getElementById("refinedDesc");
-
-  if (!btnRefine || !statusEl || !refinedDescEl) {
-    console.error("Missing UI elements. Check IDs: btnRefine, status, refinedDesc");
-    return;
-  }
-
   function setStatus(msg) {
     statusEl.textContent = msg;
   }
-
   function setLoading(isLoading) {
-    btnRefine.disabled = isLoading;
-    btnRefine.textContent = isLoading ? "⏳ Working..." : "✨ Refine with Gemini";
+    btn.disabled = isLoading;
+    btn.textContent = isLoading ? "⏳ Working..." : "✨ Refine with Gemini";
   }
 
-  // Convert Jira ADF -> plain text
+  // ✅ ADF (Jira description) -> plain text
   function adfToText(node) {
     if (!node) return "";
     if (typeof node === "string") return node;
@@ -35,15 +27,13 @@
     if (node.type === "hardBreak") return "\n";
 
     const blockTypes = new Set(["paragraph", "heading", "blockquote", "listItem"]);
-    const text = adfToText(node.content || []);
-    return blockTypes.has(node.type) ? text + "\n" : text;
+    const txt = adfToText(node.content || []);
+    return blockTypes.has(node.type) ? txt + "\n" : txt;
   }
 
-  function getIssueData(issueKey) {
+  function getIssue(issueKey) {
     return new Promise((resolve, reject) => {
-      if (!window.AP) {
-        return reject(new Error("AP is not available. Open this panel inside Jira."));
-      }
+      if (!window.AP) return reject(new Error("AP is not available (open inside Jira)."));
 
       AP.request({
         url: `/rest/api/3/issue/${issueKey}?fields=summary,description`,
@@ -68,45 +58,35 @@
     });
 
     const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      // show backend error clearly
-      throw new Error(data?.error || `Gemini API failed (${res.status})`);
-    }
-
+    if (!res.ok) throw new Error(data?.error || `Gemini API failed (${res.status})`);
     return data.response || "";
   }
 
-  btnRefine.addEventListener("click", async () => {
-    if (!issueKey) {
-      setStatus("❌ Missing issueKey in URL");
-      return;
-    }
+  btn.addEventListener("click", async () => {
+    if (!issueKey) return setStatus("❌ Missing issueKey in URL");
 
     try {
       setLoading(true);
-      refinedDescEl.value = "";
+      outputEl.value = "";
 
-      setStatus("1/3 Fetching Jira description…");
-      const issue = await getIssueData(issueKey);
+      setStatus("1/3 Reading Jira description…");
+      const issue = await getIssue(issueKey);
 
       const summary = issue?.fields?.summary || "";
-      const descADF = issue?.fields?.description || null;
-      const descText = adfToText(descADF).trim();
+      const descText = adfToText(issue?.fields?.description).trim();
 
-      setStatus("2/3 Calling Gemini API…");
+      setStatus("2/3 Calling Gemini with Jira description…");
       const prompt =
-        `Analyze the Jira ticket and rewrite professionally.\n\n` +
-        `Follow this format:\n` +
-        `1. Problem Summary\n2. Background\n3. Expected Outcome\n4. Acceptance Criteria\n\n` +
+        `Rewrite this Jira ticket in a structured professional format.\n\n` +
+        `Format:\n1. Problem Summary\n2. Background\n3. Expected Outcome\n4. Acceptance Criteria\n\n` +
         `Issue Key: ${issueKey}\n` +
         `Summary: ${summary}\n\n` +
         `Description:\n${descText || "(empty)"}`;
 
-      const output = await callGemini(prompt);
+      const result = await callGemini(prompt);
 
-      refinedDescEl.value = output;
-      setStatus("✅ Done (Gemini API called).");
+      outputEl.value = result;
+      setStatus("✅ Done. Gemini output generated.");
     } catch (e) {
       console.error(e);
       setStatus("❌ " + (e?.message || "Failed"));
@@ -115,5 +95,5 @@
     }
   });
 
-  setStatus("Ready. Click the button to call Gemini.");
+  setStatus("Ready. Click button to refine Jira description.");
 })();
