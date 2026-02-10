@@ -129,7 +129,11 @@ app.post("/api/gemini", async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }]
+        contents: [{
+          role: "user", parts: [{
+            text: `Improve and expand this Jira issue description clearly and professionally:\n\n${prompt}`
+          }]
+        }]
       })
     });
 
