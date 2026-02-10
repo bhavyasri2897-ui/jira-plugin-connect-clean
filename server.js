@@ -33,8 +33,8 @@ app.post("/uninstalled", (req, res) => {
 app.get("/atlassian-connect.json", (req, res) => {
   const descriptor = {
     apiVersion: 1,
-    key: "jira-pugin-connect-v1",
-    name: "jira-pugin-connect",
+    key: "jira-plugin-connect-clean",
+    name: "jira-plugin-connect-clean",
     description: "Refine Jira issue descriptions using Gemini AI",
     vendor: {
       name: "jira-pugin-connect",
