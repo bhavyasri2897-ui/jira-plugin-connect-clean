@@ -121,13 +121,12 @@ app.post("/api/gemini", async (req, res) => {
     }
 
     // ✅ Always use generateContent for text models
-    const url = `https://generativelanguage.googleapis.com/v1beta/${MODEL}:generateContent`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/${MODEL}:generateContent?key=${API_KEY}`;
 
     const r = await fetchFn(url, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": API_KEY
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
         contents: [{ role: "user", parts: [{ text: prompt }] }]
